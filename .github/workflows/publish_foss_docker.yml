@@ -9,14 +9,13 @@ name: Publish Chatwoot CE docker images
 on:
   push:
     branches:
-      - develop
-      - master
+      - main
     tags:
       - v*
   workflow_dispatch:
 
 env:
-  DOCKER_REPO: chatwoot/chatwoot
+  DOCKER_REPO: maxtely/chatwoot
 
 jobs:
   build:
