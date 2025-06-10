@@ -29,6 +29,7 @@ if [ "$#" -eq 0 ]; then
   exit 1
 fi
 
+
 # -regarding ! and PIPESTATUS see above
 # -temporarily store output to be able to check for errors
 # -activate quoting/enhanced mode (e.g. by writing out “--options”)
