@@ -16,7 +16,9 @@ class Conversations::PermissionFilterService
   private
 
   def accessible_conversations
-    conversations.where(inbox: user.inboxes.where(account_id: account.id))
+    conversations
+      .where(inbox: user.inboxes.where(account_id: account.id))
+      .where('team_id IS NULL OR team_id IN (?)', user.teams.select(:id))
   end
 
   def account_user
