@@ -54,7 +54,7 @@ jobs:
           if [ "${{ github.ref_name }}" = "master" ]; then
             echo "DOCKER_TAG=${DOCKER_REPO}:latest-ce" >> $GITHUB_ENV
           else
-            echo "DOCKER_TAG=${DOCKER_REPO}:${SANITIZED_REF}-ce" >> $GITHUB_ENV
+            echo "DOCKER_TAG=${DOCKER_REPO}:${SANITIZED_REF}-v1.0.0" >> $GITHUB_ENV
           fi
 
       - name: Set up QEMU
