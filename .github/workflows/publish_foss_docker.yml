@@ -9,7 +9,7 @@ name: Publish Chatwoot CE docker images
 on:
   push:
     branches:
-      - main
+      - development
     tags:
       - v*
   workflow_dispatch:
@@ -54,7 +54,7 @@ jobs:
           if [ "${{ github.ref_name }}" = "master" ]; then
             echo "DOCKER_TAG=${DOCKER_REPO}:latest-ce" >> $GITHUB_ENV
           else
-            echo "DOCKER_TAG=${DOCKER_REPO}:${SANITIZED_REF}-v1.0.0" >> $GITHUB_ENV
+            echo "DOCKER_TAG=${DOCKER_REPO}:${SANITIZED_REF}-ce" >> $GITHUB_ENV
           fi
 
       - name: Set up QEMU
@@ -124,7 +124,7 @@ jobs:
           if [ "${{ github.ref_name }}" = "master" ]; then
             TAG="${DOCKER_REPO}:latest-ce"
           else
-            TAG="${DOCKER_REPO}:${SANITIZED_REF}v1.0.0"
+            TAG="${DOCKER_REPO}:${SANITIZED_REF}-ce"
           fi
           
           docker buildx imagetools create -t $TAG \
@@ -138,7 +138,7 @@ jobs:
           if [ "${{ github.ref_name }}" = "master" ]; then
             TAG="${DOCKER_REPO}:latest-ce"
           else
-            TAG="${DOCKER_REPO}:${SANITIZED_REF}v1.0.0"
+            TAG="${DOCKER_REPO}:${SANITIZED_REF}-ce"
           fi
           
           docker buildx imagetools inspect $TAG
