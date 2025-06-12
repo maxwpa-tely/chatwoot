@@ -4,7 +4,6 @@ import SecondaryNavItem from './SecondaryNavItem.vue';
 import AccountContext from './AccountContext.vue';
 import { mapGetters } from 'vuex';
 import { FEATURE_FLAGS } from '../../../featureFlags';
-import { useAdmin } from 'dashboard/composables/useAdmin';
 import {
   getUserPermissions,
   hasPermissions,
@@ -39,11 +38,11 @@ export default {
     },
     menuConfig: {
       type: Object,
-      default: () => ({}),
+      default: () => {},
     },
     currentUser: {
       type: Object,
-      default: () => ({}),
+      default: () => {},
     },
     isOnChatwootCloud: {
       type: Boolean,
@@ -51,11 +50,6 @@ export default {
     },
   },
   emits: ['addLabel', 'toggleAccounts'],
-  data() {
-    return {
-      isAdmin: false,
-    };
-  },
   computed: {
     ...mapGetters({
       isFeatureEnabledonAccount: 'accounts/isFeatureEnabledonAccount',
@@ -64,13 +58,24 @@ export default {
       return this.customViews.filter(view => view.filter_type === 'contact');
     },
     accessibleMenuItems() {
-      const userPermissions = getUserPermissions(this.currentUser, this.accountId);
-
-      return this.menuConfig.menuItems
-        .filter(menuItem =>
-          hasPermissions(routesWithPermissions[menuItem.toStateName], userPermissions)
-        )
-        .filter(item => !item.showOnlyOnCloud || this.isOnChatwootCloud);
+      const menuItemsFilteredByPermissions = this.menuConfig.menuItems.filter(
+        menuItem => {
+          const userPermissions = getUserPermissions(
+            this.currentUser,
+            this.accountId
+          );
+          return hasPermissions(
+            routesWithPermissions[menuItem.toStateName],
+            userPermissions
+          );
+        }
+      );
+      return menuItemsFilteredByPermissions.filter(item => {
+        if (item.showOnlyOnCloud) {
+          return this.isOnChatwootCloud;
+        }
+        return true;
+      });
     },
     inboxSection() {
       return {
@@ -88,12 +93,16 @@ export default {
             id: inbox.id,
             label: inbox.name,
             truncateLabel: true,
-            toState: frontendURL(`accounts/${this.accountId}/inbox/${inbox.id}`),
+            toState: frontendURL(
+              `accounts/${this.accountId}/inbox/${inbox.id}`
+            ),
             type: inbox.channel_type,
             phoneNumber: inbox.phone_number,
             reauthorizationRequired: inbox.reauthorization_required,
           }))
-          .sort((a, b) => a.label.localeCompare(b.label)),
+          .sort((a, b) =>
+            a.label.toLowerCase() > b.label.toLowerCase() ? 1 : -1
+          ),
       };
     },
     labelSection() {
@@ -114,7 +123,9 @@ export default {
           label: label.title,
           color: label.color,
           truncateLabel: true,
-          toState: frontendURL(`accounts/${this.accountId}/label/${label.title}`),
+          toState: frontendURL(
+            `accounts/${this.accountId}/label/${label.title}`
+          ),
         })),
       };
     },
@@ -135,7 +146,9 @@ export default {
           label: label.title,
           color: label.color,
           truncateLabel: true,
-          toState: frontendURL(`accounts/${this.accountId}/contacts/labels/${label.title}`),
+          toState: frontendURL(
+            `accounts/${this.accountId}/contacts/labels/${label.title}`
+          ),
         })),
       };
     },
@@ -170,7 +183,9 @@ export default {
             id: view.id,
             label: view.name,
             truncateLabel: true,
-            toState: frontendURL(`accounts/${this.accountId}/custom_view/${view.id}`),
+            toState: frontendURL(
+              `accounts/${this.accountId}/custom_view/${view.id}`
+            ),
           })),
       };
     },
@@ -186,36 +201,29 @@ export default {
             id: view.id,
             label: view.name,
             truncateLabel: true,
-            toState: frontendURL(`accounts/${this.accountId}/contacts/segments/${view.id}`),
+            toState: frontendURL(
+              `accounts/${this.accountId}/contacts/segments/${view.id}`
+            ),
           })),
       };
     },
     additionalSecondaryMenuItems() {
-      let conversationMenuItems = [this.labelSection];
-      if (this.isAdmin) {
-        conversationMenuItems = [this.inboxSection, ...conversationMenuItems];
-      }
+      let conversationMenuItems = [this.inboxSection, this.labelSection];
+      let contactMenuItems = [this.contactLabelSection];
       if (this.teams.length) {
         conversationMenuItems = [this.teamSection, ...conversationMenuItems];
       }
       if (this.customViews.length) {
         conversationMenuItems = [this.foldersSection, ...conversationMenuItems];
       }
-
-      let contactMenuItems = [this.contactLabelSection];
       if (this.contactCustomViews.length) {
         contactMenuItems = [this.contactSegmentsSection, ...contactMenuItems];
       }
-
       return {
         conversations: conversationMenuItems,
         contacts: contactMenuItems,
       };
     },
-  },
-  created() {
-    const { isAdmin } = useAdmin();
-    this.isAdmin = isAdmin;
   },
   methods: {
     showAddLabelPopup() {
@@ -230,3 +238,28 @@ export default {
   },
 };
 </script>
+
+<template>
+  <div
+    class="flex flex-col w-48 h-full px-2 pb-8 overflow-auto text-sm bg-white border-r dark:bg-slate-900 dark:border-slate-800/50 rtl:border-r-0 rtl:border-l border-slate-50"
+  >
+    <AccountContext @toggle-accounts="toggleAccountModal" />
+    <transition-group
+      name="menu-list"
+      tag="ul"
+      class="pt-2 list-none reset-base"
+    >
+      <SecondaryNavItem
+        v-for="menuItem in accessibleMenuItems"
+        :key="menuItem.toState"
+        :menu-item="menuItem"
+      />
+      <SecondaryNavItem
+        v-for="menuItem in additionalSecondaryMenuItems[menuConfig.parentNav]"
+        :key="menuItem.key"
+        :menu-item="menuItem"
+        @add-label="showAddLabelPopup"
+      />
+    </transition-group>
+  </div>
+</template>
