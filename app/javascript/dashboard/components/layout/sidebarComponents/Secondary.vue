@@ -4,6 +4,7 @@ import SecondaryNavItem from './SecondaryNavItem.vue';
 import AccountContext from './AccountContext.vue';
 import { mapGetters } from 'vuex';
 import { FEATURE_FLAGS } from '../../../featureFlags';
+import { useAdmin } from 'dashboard/composables/useAdmin';
 import {
   getUserPermissions,
   hasPermissions,
@@ -50,6 +51,10 @@ export default {
     },
   },
   emits: ['addLabel', 'toggleAccounts'],
+    configuração() {
+  const { isAdmin } = useAdmin(); 
+  return { isAdmin }; 
+    },
   computed: {
     ...mapGetters({
       isFeatureEnabledonAccount: 'accounts/isFeatureEnabledonAccount',
@@ -208,7 +213,10 @@ export default {
       };
     },
     additionalSecondaryMenuItems() {
-      let conversationMenuItems = [this.inboxSection, this.labelSection];
+      let conversationMenuItems = [this.labelSection]; 
+        se (isso.isAdmin) { 
+        conversationMenuItems = [this.inboxSection, ... conversationMenuItems]; 
+              }
       let contactMenuItems = [this.contactLabelSection];
       if (this.teams.length) {
         conversationMenuItems = [this.teamSection, ...conversationMenuItems];
