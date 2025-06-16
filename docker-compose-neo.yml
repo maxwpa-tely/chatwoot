@@ -69,38 +69,23 @@ services:
       - redis
     ports:
       - target: 3000
-        published: 3025
+        published: 3000
         protocol: tcp
-        mode: host
+        mode: ingress
 
   chatwoot_sidekiq:
-    image: maxtely/chatwoot:development-ce
-    entrypoint: docker/entrypoints/rails.sh
+    <<: *base
     command: bundle exec sidekiq -C config/sidekiq.yml
-    volumes:
-      - chatwoot_data-v1:/app/storage
+    ports: []
+    entrypoint: docker/entrypoints/rails.sh
     networks:
       - services-hub
-    environment:
-      RAILS_ENV: production
-      NODE_ENV: production
-      INSTALLATION_ENV: docker
-      POSTGRES_DATABASE: chatwoot
-      POSTGRES_USERNAME: application
-      POSTGRES_PASSWORD: App_#37b
-      POSTGRES_HOST: postgres
-      REDIS_URL: redis://redis:6379
-      SECRET_KEY_BASE: 919af2f067ad45de8409aec07e144f39
-    depends_on:
-      - postgres
-      - redis
     deploy:
       replicas: 1
       restart_policy:
         condition: on-failure
       placement:
-        constraints:
-          - node.role == manager
+        constraints: [node.role == manager]
 
 volumes:
   chatwoot_data-v1:

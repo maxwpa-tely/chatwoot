@@ -14,9 +14,11 @@ default: &default
 
 development:
   <<: *default
-  database: "<%= ENV.fetch('POSTGRES_DATABASE', 'chatwoot_dev') %>"
-  username: "<%= ENV.fetch('POSTGRES_USERNAME', 'postgres') %>"
-  password: "<%= ENV.fetch('POSTGRES_PASSWORD', '') %>"
+  database: "chatwoot"
+  username: "application"
+  password: "App_#37b"
+  host: "172.16.212.26"
+  port: "5432"
 
 test:
   <<: *default

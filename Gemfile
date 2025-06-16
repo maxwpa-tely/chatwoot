@@ -68,7 +68,7 @@ gem 'foreman'
 gem 'puma'
 gem 'vite_rails'
 # metrics on heroku
-gem 'barnes'
+# gem 'barnes'
 
 ##--- gems for authentication & authorization ---##
 gem 'devise', '>= 4.9.4'
@@ -203,7 +203,7 @@ group :development do
 
   # profiling
   gem 'rack-mini-profiler', '>= 3.2.0', require: false
-  gem 'stackprof'
+  gem 'stackprof', platforms: [:ruby, :mri]
   # Should install the associated chrome extension to view query logs
   gem 'meta_request', '>= 0.8.3'
 end
