@@ -35,7 +35,22 @@ class Integrations::BotProcessorService
     # TODO: might needs to change this to a way that we fetch the updated value from event data instead
     # cause the message.updated event could be that that the message was deleted
 
-    return message.content_attributes['submitted_values']&.first&.dig('value') if event_name == 'message.updated'
+    #return message.content_attributes['submitted_values']&.first&.dig('value') if event_name == 'message.updated'
+
+    return message.content unless event_name == 'message.updated'
+
+    changes = event_data[:previous_changes] || {}
+
+    if (attrs_change = changes['content_attributes'])
+      new_attrs = attrs_change[1]
+      old_attrs = attrs_change[0]
+      values = new_attrs&.dig('submitted_values') || old_attrs&.dig('submitted_values')
+      return values&.first&.dig('value')
+    end
+
+    if (content_change = changes['content'])
+      return content_change[1]
+    end
 
     message.content
   end

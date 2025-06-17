@@ -5,14 +5,14 @@ class Integrations::Dialogflow::ProcessorService < Integrations::BotProcessorSer
 
   private
 
-  def message_content(message)
-    # TODO: might needs to change this to a way that we fetch the updated value from event data instead
-    # cause the message.updated event could be that that the message was deleted
+  # def message_content(message)
+  # TODO: might needs to change this to a way that we fetch the updated value from event data instead
+  # cause the message.updated event could be that that the message was deleted
 
-    return message.content_attributes['submitted_values']&.first&.dig('value') if event_name == 'message.updated'
+  #   return message.content_attributes['submitted_values']&.first&.dig('value') if event_name == 'message.updated'
 
-    message.content
-  end
+  #   message.content
+  # end
 
   def get_response(session_id, message_content)
     if hook.settings['credentials'].blank?

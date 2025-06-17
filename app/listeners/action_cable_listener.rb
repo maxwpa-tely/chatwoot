@@ -130,7 +130,10 @@ class ActionCableListener < BaseListener
 
   def conversation_contact_changed(event)
     conversation, account = extract_conversation_and_account(event)
+    # tokens = conversation_member_tokens(conversation)
+    previous_team_id = event.data[:changed_attributes]['team_id']&.first
     tokens = conversation_member_tokens(conversation)
+    tokens += team_tokens(conversation.inbox, previous_team_id, account)
 
     broadcast(account, tokens, CONVERSATION_CONTACT_CHANGED, conversation.push_event_data)
   end
@@ -174,9 +177,36 @@ class ActionCableListener < BaseListener
     user_tokens(conversation.account, members)
   end
 
+  def team_tokens(inbox, team_id, account)
+    return [] if team_id.nil?
+
+    team = account.teams.find_by(id: team_id)
+    return [] unless team
+
+    members = inbox.members.where(id: team.members.select(:id))
+    user_tokens(account, members)
+  end
+
   def typing_event_listener_tokens(_account, conversation, user)
     current_user_token = user.is_a?(Contact) ? conversation.contact_inbox.pubsub_token : user.pubsub_token
+    # (conversation_member_tokens(conversation) + [conversation.contact_inbox.pubsub_token]) - [current_user_token]
     (conversation_member_tokens(conversation) + [conversation.contact_inbox.pubsub_token]) - [current_user_token]
+  end
+
+  def conversation_member_tokens(conversation)
+    members = conversation.inbox.members
+    members = members.where(id: conversation.team.members.select(:id)) if conversation.team_id.present?
+    user_tokens(conversation.account, members)
+  end
+
+  def team_tokens(inbox, team_id, account)
+    return [] if team_id.nil?
+
+    team = account.teams.find_by(id: team_id)
+    return [] unless team
+
+    members = inbox.members.where(id: team.members.select(:id))
+    user_tokens(account, members)
   end
 
   def user_tokens(account, agents)
