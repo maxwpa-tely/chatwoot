@@ -1,0 +1,118 @@
+version: '3.8'
+
+services:
+  chatwoot: &base
+    image: maxtely/chatwoot:development-v3.0.0
+    volumes:
+      - /etc/localtime:/etc/localtime:ro
+      - chatwoot-data:/app/storage
+    command:
+      - sh
+      - -c
+      - |
+        echo "Waiting for postgres to be ready..."
+        until nc -z -v -w30 postgres 5432; do
+          echo "Waiting for postgres connection..."
+          sleep 5
+        done
+        echo "Postgres is up - running migrations..."
+        bundle exec rails db:prepare
+        echo "Starting Rails server..."
+        bundle exec rails s -b 0.0.0.0
+    environment:
+      RAILS_ENV: production
+      NODE_ENV: production
+      INSTALLATION_ENV: docker
+      POSTGRES_DATABASE: chatwoot
+      POSTGRES_USERNAME: application
+      POSTGRES_PASSWORD: App_#37b
+      POSTGRES_HOST: postgres
+      REDIS_URL: redis://redis:6379
+      SECRET_KEY_BASE: 919af2f067ad45de8409aec07e144f39
+      FRONTEND_URL: http://172.16.212.26:3000
+      API_BASE_URL: http://172.16.212.26:3000
+      DEFAULT_LOCALE: pt_BR
+      ENABLE_ACCOUNT_SIGNUP: "false"
+      ENABLE_ADMIN_PANEL: "true"
+      ENABLE_INBOX_MANAGEMENT: "true"
+      ENABLE_REPORTS: "true"
+      ACTIVE_STORAGE_SERVICE: local
+      USE_INBOX_AVATAR_FOR_BOT: "true"
+      RAILS_LOG_TO_STDOUT: "true"
+      ENABLE_ENTERPRISE: "true"
+      MAILER_SENDER_EMAIL: "no-reply@tely.com.br"
+      SMTP_DOMAIN: "tely.com.br"
+      SMTP_ADDRESS: "smtp.office365.com"
+      SMTP_PORT: "587"
+      SMTP_USERNAME: "no-reply@tely.com.br"
+      SMTP_PASSWORD: "B5;n1C93"
+      SMTP_AUTHENTICATION: "login"
+      SMTP_ENABLE_STARTTLS_AUTO: "true"
+      SMTP_OPENSSL_VERIFY_MODE: "peer"
+    networks:
+      - services-hub
+    deploy:
+      replicas: 1
+      restart_policy:
+        condition: on-failure
+      placement:
+        constraints:
+          - node.role == manager
+
+  rails:
+    <<: *base
+    ports:
+      - target: 3000
+        published: 3000
+        protocol: tcp
+        mode: ingress
+
+  chatwoot_sidekiq:
+    <<: *base
+    command: bundle exec sidekiq -C config/sidekiq.yml
+    ports: []
+    entrypoint: docker/entrypoints/rails.sh
+    networks:
+      - services-hub
+    deploy:
+      replicas: 1
+      restart_policy:
+        condition: on-failure
+      placement:
+        constraints:
+          - node.role == manager
+
+  postgres:
+    image: pgvector/pgvector:0.8.0-pg17
+    environment:
+      POSTGRES_DB: chatwoot
+      POSTGRES_USER: application
+      POSTGRES_PASSWORD: App_#37b
+    ports:
+      - "5432:5432"
+    volumes:
+      - chatwoot-db-data:/var/lib/postgresql/data
+    networks:
+      - services-hub
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U application"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    deploy:
+      replicas: 1
+      restart_policy:
+        condition: on-failure
+      placement:
+        constraints: [node.role == manager]
+
+volumes:
+  chatwoot-data:
+    external: true
+  chatwoot-db-data:
+    external: true
+
+networks:
+  services-hub:
+    external: true
