@@ -10,6 +10,13 @@ const CONVERSATION_PERMISSIONS = [
   'conversation_participating_manage',
 ];
 
+// const CONVERSATION_PERMISSIONS_V2 = [
+//  'administrator',
+//  'conversation_manage',
+//  'conversation_unassigned_manage',
+//  'conversation_participating_manage',
+// ];
+
 export default {
   routes: [
     {

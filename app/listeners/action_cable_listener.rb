@@ -77,9 +77,17 @@ class ActionCableListener < BaseListener
 
   def conversation_updated(event)
     conversation, account = extract_conversation_and_account(event)
-    tokens = conversation_member_tokens(conversation) + contact_inbox_tokens(conversation.contact_inbox)
+    authorized_tokens = conversation_member_tokens(conversation)
+    all_agents_tokens = user_tokens(account, account.agents)
 
-    broadcast(account, tokens, CONVERSATION_UPDATED, conversation.push_event_data)
+    # Tokens que estavam vendo e agora não devem mais
+    unauthorized_tokens = all_agents_tokens - authorized_tokens
+
+    broadcast(account, authorized_tokens, CONVERSATION_UPDATED, conversation.push_event_data)
+
+    return unless unauthorized_tokens.any?
+
+    broadcast(account, unauthorized_tokens, 'CONVERSATION_HIDDEN', { conversation_id: conversation.id })
   end
 
   def conversation_typing_on(event)
@@ -169,8 +177,14 @@ class ActionCableListener < BaseListener
   end
 
   def conversation_member_tokens(conversation)
-    members = conversation.inbox.members
-    members = members.where(id: conversation.team.members.select(:id)) if conversation.team_id.present?
+    if conversation.team_id.present?
+      members = conversation.team.members
+    elsif conversation.assignee_id.present?
+      members = User.where(id: conversation.assignee_id)
+    else
+      return [] # ninguém deve ver a conversa se não tem time nem responsável
+    end
+
     user_tokens(conversation.account, members)
   end
 

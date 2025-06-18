@@ -35,8 +35,14 @@ class ActionCableConnector extends BaseActionCableConnector {
       'conversation.updated': this.onConversationUpdated,
       'account.cache_invalidated': this.onCacheInvalidate,
       'copilot.message.created': this.onCopilotMessageCreated,
+      'conversation.hidden': this.onConversationHidden,
     };
   }
+
+  onConversationHidden = data => {
+    const { conversation_id: conversationId } = data;
+    this.app.$store.dispatch('deleteConversation', conversationId);
+  };
 
   // eslint-disable-next-line class-methods-use-this
   onReconnect = () => {
