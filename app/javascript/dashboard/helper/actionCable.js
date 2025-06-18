@@ -1,6 +1,7 @@
 import AuthAPI from '../api/auth';
 import BaseActionCableConnector from '../../shared/helpers/BaseActionCableConnector';
 import DashboardAudioNotificationHelper from './AudioAlerts/DashboardAudioNotificationHelper';
+import types from '../store/mutation-types';
 import { BUS_EVENTS } from 'shared/constants/busEvents';
 import { emitter } from 'shared/helpers/mitt';
 import { useImpersonation } from 'dashboard/composables/useImpersonation';
@@ -35,13 +36,19 @@ class ActionCableConnector extends BaseActionCableConnector {
       'conversation.updated': this.onConversationUpdated,
       'account.cache_invalidated': this.onCacheInvalidate,
       'copilot.message.created': this.onCopilotMessageCreated,
-      'conversation.hidden': this.onConversationHidden,
+      // 'conversation.hidden': this.onConversationHidden,
+      CONVERSATION_HIDDEN: this.onConversationHidden,
     };
   }
 
   onConversationHidden = data => {
     const { conversation_id: conversationId } = data;
-    this.app.$store.dispatch('deleteConversation', conversationId);
+    // this.app.$store.dispatch('deleteConversation', conversationId);
+    this.app.$store.commit(types.DELETE_CONVERSATION, conversationId);
+    if (this.app.$store.state.conversations.selectedChatId === conversationId) {
+      this.app.$store.dispatch('clearSelectedState');
+    }
+    this.app.$store.dispatch('conversationStats/get', {}, { root: true });
   };
 
   // eslint-disable-next-line class-methods-use-this
